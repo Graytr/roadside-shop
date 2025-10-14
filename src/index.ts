@@ -48,7 +48,7 @@ client.once('ready', async () => {
 
 client.on('interactionCreate', async (interaction) => {
     try {
-        if (!interaction.isChatInputCommand() && !interaction.isButton() && !interaction.isModalSubmit()) return;
+        if (!interaction.isChatInputCommand() && !interaction.isButton() && !interaction.isModalSubmit() && !interaction.isAutocomplete()) return;
 
         if (interaction.inGuild()) {
             await prisma.guild.upsert({
@@ -71,8 +71,12 @@ client.on('interactionCreate', async (interaction) => {
                             guildId: interaction.guildId!,
                             isActive: true,
                             OR: [
-                                { name: { contains: q, mode: 'insensitive' } },
-                                { sku:  { contains: q, mode: 'insensitive' } }
+                                { sku: { contains: q } },
+                                { sku: { contains: q.toUpperCase() } },
+                                { sku: { contains: q.toLowerCase() } },
+                                { name: { contains: q } },
+                                { name: { contains: q.toUpperCase() } },
+                                { name: { contains: q.toLowerCase() } },
                             ]
                         },
                         orderBy: { name: 'asc' },
