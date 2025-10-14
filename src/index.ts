@@ -58,6 +58,40 @@ client.on('interactionCreate', async (interaction) => {
             });
         }
 
+        if (interaction.isAutocomplete()) {
+            const commandName = interaction.commandName;
+            if (commandName === 'shop') {
+                const focused = interaction.options.getFocused(true); // { name, value }
+                if (focused.name === 'sku') {
+                    const q = (focused.value || '').toString().trim();
+
+                    // Query active products, filter by name or SKU (case-insensitive), limit 25
+                    const items = await prisma.product.findMany({
+                        where: {
+                            guildId: interaction.guildId!,
+                            isActive: true,
+                            OR: [
+                                { name: { contains: q, mode: 'insensitive' } },
+                                { sku:  { contains: q, mode: 'insensitive' } }
+                            ]
+                        },
+                        orderBy: { name: 'asc' },
+                        take: 25
+                    });
+
+                    // Each choice shows a nice label, returns SKU as the value
+                    const choices = items.map(p => ({
+                        name: `${p.name}  (SKU: ${p.sku}) — ${p.priceBems} BEMs · stock ${p.stockQty}`,
+                        value: p.sku
+                    }));
+
+                    await interaction.respond(choices);
+                    return;
+                }
+            }
+        }
+
+
         if (interaction.isChatInputCommand()) {
             const {commandName} = interaction;
 
