@@ -48,7 +48,7 @@ client.once('ready', async () => {
 
 client.on('interactionCreate', async (interaction) => {
     try {
-        if (!interaction.isChatInputCommand() && !interaction.isButton() && !interaction.isModalSubmit()) return;
+        if (!interaction.isChatInputCommand() && !interaction.isButton() && !interaction.isModalSubmit() && !interaction.isAutocomplete()) return;
 
         if (interaction.inGuild()) {
             await prisma.guild.upsert({
@@ -57,6 +57,44 @@ client.on('interactionCreate', async (interaction) => {
                 create: {id: interaction.guildId!, name: interaction.guild!.name, invMaterials: {create: {}}}
             });
         }
+
+        if (interaction.isAutocomplete()) {
+            const commandName = interaction.commandName;
+            if (commandName === 'shop') {
+                const focused = interaction.options.getFocused(true); // { name, value }
+                if (focused.name === 'sku') {
+                    const q = (focused.value || '').toString().trim();
+
+                    // Query active products, filter by name or SKU (case-insensitive), limit 25
+                    const items = await prisma.product.findMany({
+                        where: {
+                            guildId: interaction.guildId!,
+                            isActive: true,
+                            OR: [
+                                { sku: { contains: q } },
+                                { sku: { contains: q.toUpperCase() } },
+                                { sku: { contains: q.toLowerCase() } },
+                                { name: { contains: q } },
+                                { name: { contains: q.toUpperCase() } },
+                                { name: { contains: q.toLowerCase() } },
+                            ]
+                        },
+                        orderBy: { name: 'asc' },
+                        take: 25
+                    });
+
+                    // Each choice shows a nice label, returns SKU as the value
+                    const choices = items.map(p => ({
+                        name: `${p.name}  (SKU: ${p.sku}) — ${p.priceBems} BEMs · stock ${p.stockQty}`,
+                        value: p.sku
+                    }));
+
+                    await interaction.respond(choices);
+                    return;
+                }
+            }
+        }
+
 
         if (interaction.isChatInputCommand()) {
             const {commandName} = interaction;

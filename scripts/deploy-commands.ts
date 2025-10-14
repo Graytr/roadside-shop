@@ -39,11 +39,11 @@ const commands = [
         .addSubcommand(sc=>sc.setName('add').setDescription('Add a product')
             .addStringOption(o=>o.setName('name').setDescription('e.g., Carrot Pie').setRequired(true))
             .addStringOption(o=>o.setName('sku').setDescription('unique id').setRequired(true))
-            .addIntegerOption(o=>o.setName('priceBems').setDescription('price in BEMs').setRequired(true))
+            .addIntegerOption(o=>o.setName('price_bems').setDescription('price in BEMs').setRequired(true))
             .addIntegerOption(o=>o.setName('stock_qty').setDescription('starting stock').setRequired(true)))
         .addSubcommand(sc=>sc.setName('setprice').setDescription('Update a product price')
             .addStringOption(o=>o.setName('sku').setDescription('product sku').setRequired(true))
-            .addIntegerOption(o=>o.setName('priceBems').setDescription('BEMs').setRequired(true)))
+            .addIntegerOption(o=>o.setName('price_bems').setDescription('BEMs').setRequired(true)))
         .addSubcommand(sc=>sc.setName('stock').setDescription('Set product stock qty')
             .addStringOption(o=>o.setName('sku').setDescription('product sku').setRequired(true))
             .addIntegerOption(o=>o.setName('qty').setDescription('new stock').setRequired(true))),
@@ -62,7 +62,7 @@ const commands = [
     new SlashCommandBuilder()
         .setName('shop')
         .setDescription('Post a shop offer message with Buy buttons (for traders)')
-        .addStringOption(o=>o.setName('sku').setDescription('product sku').setRequired(true))
+        .addStringOption(o => o.setName('sku').setDescription('product sku').setRequired(true).setAutocomplete(true))
         .addIntegerOption(o=>o.setName('qty').setDescription('quantity to sell in this post').setRequired(true))
         .addChannelOption(o=>o.setName('channel').setDescription('target channel').setRequired(false)),
 ].map(c=>c.toJSON());
