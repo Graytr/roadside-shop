@@ -1,0 +1,114 @@
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Guild {
+  id              String   @id  // Discord guild id
+  name            String
+  createdAt       DateTime @default(now())
+  adminRoleId     String?
+  traderRoleId    String?
+  invMaterials    Materials @relation(fields: [materialsId], references: [id])
+  materialsId     String
+  products        Product[]
+  offers          Offer[]
+  wallets         Wallet[]
+  txns            Transaction[]
+  tickets         Ticket[]
+}
+
+model Materials {
+  id        String   @id @default(cuid())
+  bolts     Int      @default(0)
+  ductTape  Int      @default(0)
+  planks    Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  Guild Guild[]
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  guildId       String
+  name          String
+  sku           String   @unique
+  description   String   @default("")
+  priceBems     Int      @default(0)
+  stockQty      Int      @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  guild         Guild    @relation(fields: [guildId], references: [id])
+
+  Offer Offer[]
+}
+
+model Wallet {
+  id        String   @id @default(cuid())
+  guildId   String
+  userId    String
+  bolts     Int      @default(0)
+  ductTape  Int      @default(0)
+  planks    Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  guild     Guild    @relation(fields: [guildId], references: [id])
+
+  @@unique([guildId, userId])
+}
+
+model Offer {
+  id         String   @id @default(cuid())
+  guildId    String
+  productId  String
+  channelId  String
+  messageId  String?
+  qty        Int
+  remaining  Int
+  createdBy  String
+  createdAt  DateTime @default(now())
+
+  guild     Guild   @relation(fields: [guildId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
+  tickets   Ticket[]
+}
+
+model Ticket {
+  id         String   @id @default(cuid())
+  guildId    String
+  offerId    String
+  buyerId    String
+  threadId   String
+  status     String   @default("OPEN") // was: TicketStatus
+  claimedBy  String?
+  createdAt  DateTime @default(now())
+  closedAt   DateTime?
+
+  offer      Offer   @relation(fields: [offerId], references: [id])
+  guild      Guild   @relation(fields: [guildId], references: [id])
+}
+
+model Transaction {
+  id           String   @id @default(cuid())
+  guildId      String
+  kind         String
+  dBolts       Int      @default(0)
+  dDuctTape    Int      @default(0)
+  dPlanks      Int      @default(0)
+  productId    String?
+  productQty   Int?
+  walletUserId String?
+  offerId      String?
+  ticketId     String?
+  memo         String   @default("")
+  actedBy      String
+  createdAt    DateTime @default(now())
+
+  guild     Guild    @relation(fields: [guildId], references: [id])
+}
