@@ -4,11 +4,11 @@ import { Registry } from './framework/Registry.js';
 import { RssCommand } from './commands/rss/RssCommand.js';
 
 const token = process.env.DISCORD_TOKEN!;
-const clientId = process.env.DISCORD_CLIENT_ID!;
+const clientId = process.env.DISCORD_APP_ID!;
 const guildId = process.env.DISCORD_GUILD_ID; // optional for guild-scoped deploys
 
 if (!token || !clientId) {
-    console.error('Missing DISCORD_TOKEN or DISCORD_CLIENT_ID in environment.');
+    console.error('Missing DISCORD_TOKEN or DISCORD_APP_ID in environment.');
     process.exit(1);
 }
 

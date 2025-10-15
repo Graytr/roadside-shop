@@ -1,48 +1,73 @@
-generator client {
-  provider = "prisma-client-js"
-}
+// prisma/schema.prisma
+generator client { provider = "prisma-client-js" }
+datasource db { provider = "sqlite"; url = env("DATABASE_URL") }
 
-datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
-}
-
-model Inventory {
-  // one row per product per guild
+/** Catalog of items your bot tracks (e.g., Carrot Pie). */
+model Item {
   guildId String
-  name    String
-  price   Float
-  stock   Int
-
+  name    String   // unique per guild
+  price   Float?   // optional, keep/remove as you like
   @@id([guildId, name])
-  @@map("inventory")
+  @@map("items")
 }
 
-model Material {
+/** All guild-owned holdings, physically held by users (no central pool). */
+model ItemCustody {
   guildId String
-  name    String
-  value   Float
-
-  @@id([guildId, name])
-  @@map("materials")
-}
-
-model Wallet {
-  guildId String
+  item    String
   userId  String
-  // store cents to avoid float rounding; services can convert if you prefer
-  cents   Int
-
-  @@id([guildId, userId])
-  @@map("wallets")
+  qty     Int      // integer; cannot be fractional
+  ts      BigInt   // last change timestamp (ms)
+  @@id([guildId, item, userId])
+  @@map("item_custody")
 }
 
+/** Optional: production audit (who crafted what for the guild). */
+model ProductionLog {
+  id      String  @id @default(cuid())
+  guildId String
+  item    String
+  userId  String
+  qty     Int
+  ts      BigInt
+  note    String?
+  @@index([guildId, item, userId, ts])
+  @@map("production_log")
+}
+
+/** Optional: transfer audit between members (hand-offs). */
+model TransferLog {
+  id       String  @id @default(cuid())
+  guildId  String
+  item     String
+  fromUser String
+  toUser   String
+  qty      Int
+  ts       BigInt
+  note     String?
+  @@index([guildId, item, fromUser, toUser, ts])
+  @@map("transfer_log")
+}
+
+/** Optional: consumption/sale/removal audit. */
+model ConsumptionLog {
+  id      String  @id @default(cuid())
+  guildId String
+  item    String
+  userId  String    // who reduced their held qty
+  qty     Int       // positive; means “qty removed”
+  reason  String?
+  ts      BigInt
+  @@index([guildId, item, userId, ts])
+  @@map("consumption_log")
+}
+
+/** BEM catalog and per-user custody (same discrete-unit idea). */
 model Bem {
   guildId String
-  id      String   // e.g., "BEM-001"
+  id      String
   label   String
-  qty     Int
-
+  qty     Int       // total number the guild manages
   @@id([guildId, id])
   @@map("bems")
 }
@@ -52,8 +77,16 @@ model BemCustody {
   bemId   String
   userId  String
   qty     Int
-  ts      BigInt   // epoch ms
-
+  ts      BigInt
   @@id([guildId, bemId, userId])
   @@map("bem_custody")
+}
+
+/** Materials setting knob (unchanged). */
+model Material {
+  guildId String
+  name    String
+  value   Float
+  @@id([guildId, name])
+  @@map("materials")
 }

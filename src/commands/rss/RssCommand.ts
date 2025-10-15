@@ -21,6 +21,11 @@ import { BemCheckout } from './subcommands/BemCheckout.js';
 import { BemCheckin } from './subcommands/BemCheckin.js';
 import { BemHolders } from './subcommands/BemHolders.js';
 import { BemMy } from './subcommands/BemMy.js';
+import { ItemProduce } from './subcommands/ItemProduce.js';
+import { ItemTransfer } from './subcommands/ItemTransfer.js';
+import { ItemConsume } from './subcommands/ItemConsume.js';
+import { ItemHolders } from './subcommands/ItemHolders.js';
+import { MyItems } from './subcommands/MyItems.js';
 
 export class RssCommand extends CommandBase implements CommandLike {
     constructor() {
@@ -40,6 +45,11 @@ export class RssCommand extends CommandBase implements CommandLike {
         this.registerSubcommand(new BemCheckin());
         this.registerSubcommand(new BemHolders());
         this.registerSubcommand(new BemMy());
+        this.registerSubcommand(new ItemProduce());
+        this.registerSubcommand(new ItemTransfer());
+        this.registerSubcommand(new ItemConsume());
+        this.registerSubcommand(new ItemHolders());
+        this.registerSubcommand(new MyItems());
     }
 
     data() {
@@ -126,7 +136,35 @@ export class RssCommand extends CommandBase implements CommandLike {
         builder.addSubcommand((sc) =>
             sc.setName('bem-my').setDescription('Admin: show BEMs you hold')
         );
+        builder.addSubcommand((sc) =>
+            sc.setName('item-produce').setDescription('Record production (adds to your custody)')
+                .addStringOption(o => o.setName('item').setDescription('Item name').setRequired(true))
+                .addIntegerOption(o => o.setName('qty').setDescription('Quantity').setRequired(true))
+                .addStringOption(o => o.setName('note').setDescription('Optional note'))
+        );
 
+        builder.addSubcommand((sc) =>
+            sc.setName('item-transfer').setDescription('Transfer your custody to another member')
+                .addStringOption(o => o.setName('item').setDescription('Item name').setRequired(true))
+                .addUserOption(o => o.setName('to').setDescription('Recipient').setRequired(true))
+                .addIntegerOption(o => o.setName('qty').setDescription('Quantity').setRequired(true))
+        );
+
+        builder.addSubcommand((sc) =>
+            sc.setName('item-consume').setDescription('Reduce your custody (sold/used/delivered)')
+                .addStringOption(o => o.setName('item').setDescription('Item name').setRequired(true))
+                .addIntegerOption(o => o.setName('qty').setDescription('Quantity').setRequired(true))
+                .addStringOption(o => o.setName('reason').setDescription('Optional reason'))
+        );
+
+        builder.addSubcommand((sc) =>
+            sc.setName('item-holders').setDescription('See who holds an item')
+                .addStringOption(o => o.setName('item').setDescription('Item name').setRequired(true))
+        );
+
+        builder.addSubcommand((sc) =>
+            sc.setName('my-items').setDescription('Show the items you hold')
+        );
         return builder;
     }
 
