@@ -1,114 +1,59 @@
-
-datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
-}
-
 generator client {
   provider = "prisma-client-js"
 }
 
-model Guild {
-  id              String   @id  // Discord guild id
-  name            String
-  createdAt       DateTime @default(now())
-  adminRoleId     String?
-  traderRoleId    String?
-  invMaterials    Materials @relation(fields: [materialsId], references: [id])
-  materialsId     String
-  products        Product[]
-  offers          Offer[]
-  wallets         Wallet[]
-  txns            Transaction[]
-  tickets         Ticket[]
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
-model Materials {
-  id        String   @id @default(cuid())
-  bolts     Int      @default(0)
-  ductTape  Int      @default(0)
-  planks    Int      @default(0)
-  updatedAt DateTime @updatedAt
+model Inventory {
+  // one row per product per guild
+  guildId String
+  name    String
+  price   Float
+  stock   Int
 
-  Guild Guild[]
+  @@id([guildId, name])
+  @@map("inventory")
 }
 
-model Product {
-  id            String   @id @default(cuid())
-  guildId       String
-  name          String
-  sku           String   @unique
-  description   String   @default("")
-  priceBems     Int      @default(0)
-  stockQty      Int      @default(0)
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  guild         Guild    @relation(fields: [guildId], references: [id])
+model Material {
+  guildId String
+  name    String
+  value   Float
 
-  Offer Offer[]
+  @@id([guildId, name])
+  @@map("materials")
 }
 
 model Wallet {
-  id        String   @id @default(cuid())
-  guildId   String
-  userId    String
-  bolts     Int      @default(0)
-  ductTape  Int      @default(0)
-  planks    Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  guild     Guild    @relation(fields: [guildId], references: [id])
+  guildId String
+  userId  String
+  // store cents to avoid float rounding; services can convert if you prefer
+  cents   Int
 
-  @@unique([guildId, userId])
+  @@id([guildId, userId])
+  @@map("wallets")
 }
 
-model Offer {
-  id         String   @id @default(cuid())
-  guildId    String
-  productId  String
-  channelId  String
-  messageId  String?
-  qty        Int
-  remaining  Int
-  createdBy  String
-  createdAt  DateTime @default(now())
+model Bem {
+  guildId String
+  id      String   // e.g., "BEM-001"
+  label   String
+  qty     Int
 
-  guild     Guild   @relation(fields: [guildId], references: [id])
-  product   Product @relation(fields: [productId], references: [id])
-  tickets   Ticket[]
+  @@id([guildId, id])
+  @@map("bems")
 }
 
-model Ticket {
-  id         String   @id @default(cuid())
-  guildId    String
-  offerId    String
-  buyerId    String
-  threadId   String
-  status     String   @default("OPEN") // was: TicketStatus
-  claimedBy  String?
-  createdAt  DateTime @default(now())
-  closedAt   DateTime?
+model BemCustody {
+  guildId String
+  bemId   String
+  userId  String
+  qty     Int
+  ts      BigInt   // epoch ms
 
-  offer      Offer   @relation(fields: [offerId], references: [id])
-  guild      Guild   @relation(fields: [guildId], references: [id])
-}
-
-model Transaction {
-  id           String   @id @default(cuid())
-  guildId      String
-  kind         String
-  dBolts       Int      @default(0)
-  dDuctTape    Int      @default(0)
-  dPlanks      Int      @default(0)
-  productId    String?
-  productQty   Int?
-  walletUserId String?
-  offerId      String?
-  ticketId     String?
-  memo         String   @default("")
-  actedBy      String
-  createdAt    DateTime @default(now())
-
-  guild     Guild    @relation(fields: [guildId], references: [id])
+  @@id([guildId, bemId, userId])
+  @@map("bem_custody")
 }
